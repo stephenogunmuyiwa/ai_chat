@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Interface Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom right, #f0f4fc, #c9d6ff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 600px;
+            height: 80%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: #6c63ff;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+        }
+
+        .chat-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chat-message {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .chat-message.user {
+            flex-direction: row-reverse;
+        }
+
+        .chat-message .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #6c63ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .chat-message.user .avatar {
+            background: #ff6b6b;
+        }
+
+        .chat-message .message {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            background: #f1f1f1;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .chat-message.user .message {
+            background: #d1c4ff;
+        }
+
+        .chat-footer {
+            padding: 15px;
+            background: #f8f8f8;
+            display: flex;
+            gap: 10px;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+        }
+
+        .chat-footer input {
+            flex: 1;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+
+        .chat-footer button {
+            padding: 10px 15px;
+            background: #6c63ff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .chat-footer button:hover {
+            background: #574ed8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="chat-container">
+        <div class="chat-header">AI Chat</div>
+        <div class="chat-body" id="chatBody">
+            <div class="chat-message ai">
+                <div class="avatar">AI</div>
+                <div class="message">Hello! How can I assist you today?</div>
+            </div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="userInput" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBody = document.getElementById('chatBody');
+
+        function addMessage(sender, text) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-message', sender);
+
+            const avatarElement = document.createElement('div');
+            avatarElement.classList.add('avatar');
+            avatarElement.textContent = sender === 'user' ? 'U' : 'AI';
+
+            const textElement = document.createElement('div');
+            textElement.classList.add('message');
+            textElement.textContent = text;
+
+            messageElement.appendChild(avatarElement);
+            messageElement.appendChild(textElement);
+            chatBody.appendChild(messageElement);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage('user', message);
+            userInput.value = '';
+
+            // Send message to Flask server
+            fetch('/response', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const aiResponse = data.response;
+                    addMessage('ai', aiResponse);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    addMessage('ai', 'Oops! Something went wrong.');
+                });
+        }
+    </script>
+</body>
+
+</html>
